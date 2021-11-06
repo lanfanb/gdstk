@@ -25,17 +25,25 @@ class build_ext(_build_ext):
         config = "Debug" if self.debug else "Release"
 
         build_dir.mkdir(parents=True, exist_ok=True)
-        self.spawn(
-            [
-                "cmake",
-                "-S",
-                str(root_dir),
-                "-B",
-                str(build_dir),
-                "-DCMAKE_INSTALL_PREFIX=" + str(install_dir),
-                "-DCMAKE_BUILD_TYPE=" + config,
-            ]
-        )
+
+        cmake_build = [
+            "cmake",
+            "-S",
+            str(root_dir),
+            "-B",
+            str(build_dir),
+            "-DCMAKE_INSTALL_PREFIX=" + str(install_dir),
+            "-DCMAKE_BUILD_TYPE=" + config,
+            "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache",
+            "-DCMAKE_C_COMPILER_LAUNCHER=ccache"
+        ]
+
+        if os.environ.get('INSTALL_ZLIB') is not None:
+            cmake_build.append("-DZLIB_ROOT=" + os.environ.get('INSTALL_ZLIB'))
+            cmake_build.append("-DZLIB_LIBRARY=" + os.environ.get('INSTALL_ZLIB') + "/lib/libz.a")
+
+        self.spawn(cmake_build)
+
         if not self.dry_run:
             self.spawn(
                 [
